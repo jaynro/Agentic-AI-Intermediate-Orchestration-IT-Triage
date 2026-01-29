@@ -1,118 +1,131 @@
-# Project 2 – The Customer Resolution Squad (Retail Support AI) – README
+# Project 3 – The Self-Healing Engineer (Autonomous DevOps AI) – README
 
-## Introduction
+## Overview
 
-The **Customer Resolution Squad** is an AI-driven customer support system built for a retail/e-commerce context. It utilizes a team of specialized AI agents to automatically handle customer inquiries in three main areas:
+The Self-Healing Engineer is an AI agent designed to autonomously diagnose and fix software issues, embodying the role of a DevOps/SRE or bug-fixing developer. This project demonstrates an advanced application of agentic AI: the agent uses a looping strategy to iteratively attempt solutions until the problem is resolved or a limit is reached. It integrates with a development environment – reading error logs and test results, editing code or configurations, running tests/commands – much like a human engineer working in an IDE.
 
-* **Order & Shipping Inquiries** – e.g. “Where’s my order?”, “When will my package arrive?”
-* **Billing & Refund Requests** – e.g. “I was charged twice,” “I want to return my item for a refund.”
-* **Technical Support** – e.g. “Your website crashes when I try to checkout,” “The mobile app isn’t working.”
+### Scenarios:
 
-By divvying up tasks among specialist agents (Order Agent, Billing Agent, Tech Agent) and coordinating them with a central agent, the system can provide quick, context-appropriate responses.
+* **Automated Bug Fixing (Code Self-Healing):** When a test fails, the agent identifies the bug in the code, applies a fix, and re-runs tests.
+* **Automated Config/Environment Remediation:** When a system error or misconfiguration is detected, the agent diagnoses and applies the correct fix.
 
-### Key Highlights
+This illustrates the potential of zero-downtime systems powered by Google’s Antigravity framework.
 
-* Multi-agent orchestration using Google’s ADK (Agent Development Kit) patterns.
-* Integration of external data (order database, FAQ knowledge base) through tools or API logic.
-* Responsible AI principles: accuracy, non-harm, politeness.
-* Domain-specific, but extensible design.
+## Features
 
----
+* **Automated Test Monitoring**
+* **Intelligent Debugging (LLM Powered)**
+* **Code Editing via Patch Application**
+* **Looped Verification (ADK LoopAgent style)**
+* **Autonomous Ops Actions**
+* **Safe Escalation Protocol**
+* **Logging and Version Control**
 
-## System Architecture
+## Usage Guide
 
-### Components:
+### Codebase
 
-* **SupportCoordinator**: Classifies queries and delegates to specialists.
-* **OrderAgent**: Fetches order status, tracking info from order DB.
-* **BillingAgent**: Answers refund/charge issues using policy info or transaction data.
-* **TechAgent**: Troubleshoots using a knowledge base of known issues.
-* **Fallback/Escalation**: Handles unknown categories or failed resolutions.
+Located in `buggy_project/`:
 
-```text
-Customer Query --> [SupportCoordinator] --(classify)--> Specialist Agent (Order/Billing/Tech)
-                   [SupportCoordinator] <--(response)-- Specialist Agent
-Customer Query --> [SupportCoordinator] --(if unknown)--> Escalation (human)
-```
+* `calculator.py`: Buggy module
+* `test_calculator.py`: Unit tests
 
-All agents communicate via text and are simulated in a single Python script for clarity.
-
----
-
-## Data Sources and Configuration
-
-* **Order Database** (`data/orders.json`):
-
-  ```json
-  {
-    "1001": { "status": "In Transit", "ETA": "2026-02-15", "carrier": "UPS", "tracking": "UPS12345" }
-  }
-  ```
-
-* **Billing Policies** (`data/policies.json`): Refund timelines, return policies.
-
-* **Tech Knowledge Base** (`data/knowledge_base.json`): Known issues and solutions.
-
-No API keys are needed for this offline prototype.
-
----
-
-## Running the Support AI
-
-Run the main script:
+### Running the Agent
 
 ```bash
-python support_bot.py
+python run_self_healing.py
 ```
 
-### Sample Interactions
+**Console Output Example:**
 
-**Query:** "Where is my order #1001?"
+```
+[Attempt 1] Test failure summary: AssertionError: divide(5,0) did not raise ZeroDivisionError
+Proposed fix: Add check for divisor == 0
+Applying fix...
+Re-running tests...
+```
 
-* **Response:** “Hi there! I’m sorry your order #1001 hasn’t arrived yet. It is **In Transit** with UPS, expected by Feb 15, 2026. Tracking: UPS12345.”
+**Final Report:**
 
-**Query:** “I want a refund.”
+* "All tests passed after X attempts 🎉"
+* OR: "Escalation: agent could not fix after X attempts."
 
-* **Response:** “I’m sorry the item didn’t work out. A refund will be processed within 5–7 business days. A return label has been emailed to you.”
+### Review the Fix
 
-**Query:** “App crashes during checkout.”
+Diff example:
 
-* **Response:** “Please update to version 2.3.1. This fixes the checkout crash. If the issue persists, clear cache or reinstall.”
+```diff
+*** Diff for Attempt 1 ***
+@@ def divide(a, b):
+-    return a/b
++    if b == 0:
++        raise ZeroDivisionError("division by zero")
++    return a/b
+```
 
-**Query:** “Do you have any job openings?”
+### System Issue Demo
 
-* **Response:** “I’m sorry, I’m not able to assist with that. I’ve forwarded your message to our team.”
+```bash
+python memory_service.py   # Terminal 1
+python run_self_healing.py --system_issue   # Terminal 2
+```
 
----
+**Expected:**
+
+* Agent detects issue in `service.conf`
+* Adjusts `MAX_CONNECTIONS`, restarts service
+* Confirms resolution
 
 ## Implementation Details
 
-* **Google ADK Usage**: Follows patterns like `SequentialAgent` in spirit, though routing logic is implemented via `if/else` for simplicity.
-* **LLM Integration**: GPT-4 or Gemini used mainly for composing responses. Templating is used for repetitive replies.
-* **ADK Tools**: Simulated via local data loading; full ADK tool invocation omitted for simplicity.
-* **Logging**: Logs include classification result, agent decisions, and LLM output.
+### AI Reasoning
 
----
+* Prompt includes: failing test message, code snippet, and past attempts
+* Structured system prompt: act like a senior Python engineer
 
-## Customization & Extensions
+### ADK Alignment
 
-* **Add New Agent**: Define a new agent class, update classifier, and coordinator logic.
-* **Improve Classification**: Replace with a trained classifier or enhance prompt.
-* **Real Data Integration**: Replace JSON with API queries or database connections.
-* **UI Layer**: Wrap the logic into a Flask API or chatbot interface for deployment.
+* `loop_fix()` mirrors LoopAgent pattern
+* Conditions: pass tests or reach max iterations
+* Only FixAgent logic uses LLM; control logic remains deterministic
 
----
+### Memory & Tooling
 
-## Testing and Observations
+* Tracks previous attempts
+* Uses: `run_tests()`, `modify_file(diff)`, `restart_service()`
+* Logs every change
 
-* Handled edge cases like unknown queries with graceful fallback.
-* Verified consistent tone using prompt templates and LLM tuning.
-* Known limitation: single-category classification per query.
+### Error Handling
 
----
+* Invalid diffs or unresolved errors trigger escalation
+
+## Results
+
+### Bug Fixes
+
+* **ZeroDivisionError**: Fixed in 1 attempt
+* **Off-by-One Error**: Resolved in 2 attempts (loop mechanism success)
+
+### Config Fix
+
+* Adjusted `MAX_CONNECTIONS` after detecting crash in log
+* Confirmed resolution with success message
+
+### Performance
+
+* <15 seconds end-to-end with 2-3 LLM iterations
+* Maintains PEP8 and readable code
+
+## Limitations & Improvements
+
+* Complex bugs need multi-agent or spec-guided prompting
+* Limited to test failures – could expand to monitoring tools, alerting systems
+* Security sandboxing and policy enforcement
+* Reflect-and-Retry pattern could replace loop logic
+* Domain knowledge injection (e.g., pricing constraints in finance)
 
 ## Conclusion
 
-Project 2 showcases how specialized agents coordinated by a central logic can autonomously handle retail customer support at scale. Each agent remains simple and focused, enabling a robust and extensible system aligned with Responsible AI principles.
+This final capstone demonstrates autonomous agentic behavior in a real-world DevOps context. By combining LLM reasoning with structured tool execution, we simulate an agent that doesn’t just analyze but **acts**, continuously refining and verifying its fixes.
 
-**Next:** Project 3 – A self-healing software system (DevOps AI).
+In production, such agents could prevent costly downtime, unblock engineering teams, and pave the way toward intelligent, resilient systems.
