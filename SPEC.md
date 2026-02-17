@@ -1,162 +1,89 @@
-**Project 2: The Customer Resolution Squad – SPEC.md**
+# Project 3 – The Self-Healing Engineer (Autonomous DevOps AI)
 
----
+## README
 
-## 1. Background and Motivation
+### Overview
 
-### Industry Context
+The Self-Healing Engineer is an AI agent designed to autonomously diagnose and fix software issues, embodying the role of a DevOps/SRE or bug-fixing developer. This project demonstrates an advanced application of agentic AI: the agent uses a looping strategy to iteratively attempt solutions until the problem is resolved or a limit is reached. It integrates with a development environment – reading error logs and test results, editing code or configurations, running tests/commands – much like a human engineer working in an IDE.
 
-In the retail and e-commerce sector, customer support is critical. Companies often receive large volumes of inquiries about orders, returns, and technical issues. Traditional support methods (human agents or basic chatbots) may be slow or inconsistent. This project proposes a multi-agent AI system, the "Customer Resolution Squad," to autonomously triage and resolve customer support tickets, improving response time, accuracy, and overall customer satisfaction.
+> ⚠️ **Note**: This is an example capstone project. We encourage students to propose their own agent-based projects based on personal interest, experience, or industry relevance.
 
-Inspired by e-commerce giants experimenting with agent teams for support, this project mimics microservices in customer service.
+### Project Objectives
 
-### Project Overview
+* **Automated Bug Fixing (Code Self-Healing)**: Identify code bugs based on failing tests, generate patches, and re-test in a loop until successful.
+* **Automated Config/Environment Remediation**: Detect and resolve system misconfigurations or errors (e.g. restart services, edit settings).
+* **Looping Behavior**: Use an ADK-style LoopAgent approach to iterate on fixes, learning from each failure until success or maximum retries.
 
-The system includes multiple AI agents with defined roles:
+### Features
 
-* **Coordinator Agent**: Routes incoming queries.
-* **Specialist Agents**: Handle specific categories:
+* Test execution and failure detection
+* Error analysis with LLM
+* Code patch generation and application
+* Verification of fixes via test reruns
+* Iterative retry logic
+* Safe escalation and rollback
+* Logging and version control (per-attempt diffs and summaries)
 
-  * Billing Specialist
-  * Tech Support
-  * Order Status
+### Usage
 
-Agents access tools/APIs (e.g., order database, FAQ knowledge base) to resolve tickets. The project emphasizes orchestration (SequentialAgent, ParallelAgent), agent collaboration, and external data integration.
+1. Clone this repo.
+2. Navigate to the `buggy_project/` directory.
+3. Run the demo:
 
----
+   ```bash
+   python run_self_healing.py
+   ```
+4. Observe:
 
-## 2. Objectives and Scope
+   * Test output
+   * Fix attempts with LLM-generated patches
+   * Logs and diffs saved to file
 
-### Objective
+### System Requirements
 
-Develop a multi-agent customer support system that handles:
+* Python 3.8+
+* `pytest`
+* OpenAI API (or a local LLM wrapper)
 
-* Order/Shipping queries
-* Billing/Refunds
-* Technical issues
+### Example
 
-It should classify inquiries, invoke specialist agents, and compose a response. If uncertain, escalate to a human.
+```
+[Attempt 1] Test failure summary: AssertionError: divide(5,0) did not raise ZeroDivisionError
+Proposed fix: Add check for divisor == 0 and raise ZeroDivisionError
+Applying fix...
+Re-running tests...
+Success: All tests passed after 1 attempt 🎉
+```
 
-### Scope
+### Directory Structure
 
-**In Scope**:
+```
+/
+├── buggy_project/
+│   ├── calculator.py            # Demo app with bug
+│   ├── test_calculator.py      # Pytest test suite
+│   ├── service.conf            # Config file for system error demo
+│   ├── memory_service.py       # Dummy service with simulated log output
+├── self_healing_agent.py       # Main agent implementation
+├── run_self_healing.py         # Driver script for code/system fix loop
+├── agent_fixes.log             # Log of attempted fixes
+├── patch_attempt_*.diff        # Diffs per iteration
+```
 
-* Natural language (text) inquiries
-* Order, Billing, Tech categories
-* Simulated databases: Orders, FAQ, Troubleshooting
-* ADK workflow agents
-* Friendly, professional tone
+### Capstone Deliverables
 
-**Out of Scope**:
+* Self-Healing Agent codebase
+* Log files and change history
+* System and test configuration
+* Presentation/demo walkthrough
 
-* Voice input/output, GUI chat interfaces
-* Multi-facet complex queries
-* Deep account integration (we simulate this)
+### Capstone Presentation Guidance
 
----
+Prepare a live demo showing:
 
-## 3. Functional Requirements
+* A failing test and agent’s fix loop
+* A config issue resolved by the agent
+* Logs of each iteration
+* Final test pass
 
-* **FR1**: Accept and classify customer inquiry
-* **FR2**: Invoke appropriate specialist agent
-* **FR3**: Retrieve relevant data via tools (Order DB, FAQ, Troubleshooting KB)
-* **FR4**: Compose customer-friendly response
-* **FR5**: Maintain helpful tone and professionalism
-* **FR6**: Handle multi-turn interactions (optional, mostly single-turn)
-* **FR7**: Escalate with fallback message if confidence is low
-* **FR8**: Log inquiry, agent actions, and response
-
----
-
-## 4. Non-Functional Requirements
-
-* **NFR1**: Accurate, relevant answers from simulated data
-* **NFR2**: Response within ~5 seconds
-* **NFR3**: Robust against noisy input, missing data
-* **NFR4**: Ethical tone, professional under all circumstances
-* **NFR5**: Modular, easily extendable architecture
-* **NFR6**: Testable components and end-to-end flows
-
----
-
-## 5. System Design and ADK Approach
-
-### Agents
-
-* **Coordinator Agent**: SequentialAgent or custom dispatcher; classifies and routes
-* **Classifier**: LLM or rules-based classifier
-* **Billing Agent**: LlmAgent + BillingDBTool or FAQTool
-* **Order Agent**: LlmAgent + OrderStatusTool
-* **Tech Agent**: LlmAgent + KnowledgeBaseTool
-* **Fallback/Escalation**: Return a helpful generic response
-
-### Workflow Options
-
-* Use ADK's SequentialAgent or coordinator logic in Python
-* For routing: use explicit classification logic or ADK’s AutoFlow pattern
-
-### Tools
-
-* **OrderStatusTool**: JSON/dict-based fake order DB
-* **BillingTool/PolicyTool**: Return refund info or simulate transaction record
-* **KnowledgeBaseTool**: Lookup known tech issues
-
-### Format
-
-* Responses are single-turn, clear, professional messages
-* Coordinator may compose final message based on specialist output
-
-### Responsible AI
-
-* LLM instructed to remain polite and not hallucinate sensitive info
-
----
-
-## 6. Technical Implementation Plan
-
-* **Language**: Python + Google ADK
-* **Structure**: `support_bot.py`, `data/order_db.json`, `data/faqs.json`
-* **Agent Classes**: Each agent has distinct function and logic
-* **Prompt Templates**:
-
-  * Order: Inform status from DB
-  * Billing: Explain policy or confirm refund
-  * Tech: Troubleshoot or escalate
-* **Tone Control**: Via system prompt prepended to all agent prompts
-* **Testing**: Prepare sample queries per category; include edge cases (unknown category, multi-intent)
-
----
-
-## 7. Project Deliverables
-
-* Source code: Multi-agent system with agent and tool modules
-* Simulated data: JSON files for order info, FAQs, known issues
-* Test transcripts: Sample query-response dialogues
-* Demo: Live run of end-to-end customer query handling
-* SPEC.md (this file) as reference for design
-
----
-
-## 8. Risks and Mitigations
-
-* **Misclassification**: Classifier errors; use rules + LLM, and fallback logic
-* **Missing data**: Return helpful error + escalate
-* **Hallucination**: Rely on real data; instruct LLM to defer if uncertain
-* **Tone drift**: Strong style guidance in prompts
-* **Performance**: Use fast local tools; limit LLM calls
-* **ADK complexity**: Fall back to plain Python logic if ADK integration proves brittle
-
----
-
-## 9. Success Criteria
-
-* **Accuracy**: Correct category classification and useful responses
-* **Autonomy**: Minimal human involvement in typical cases
-* **Quality**: Empathetic, brand-consistent tone
-* **ADK Use**: At least one ADK multi-agent pattern + tools
-* **Code Quality**: Passes code review checklist
-* **Performance**: Timely responses; includes internal logs of operations
-
----
-
-If these are met, we will have validated a scalable multi-agent support system for retail, ready to be expanded or deployed
+Include reflections on challenges, iterations, and lessons learned. This capstone demonstrates how autonomous agents can meaningfully contribute to software reliability.
